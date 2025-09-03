@@ -11,16 +11,18 @@ on:
 jobs:
   register-schema:
     runs-on: ubuntu-latest
-
-    # This job requires access to Confluent Cloud API key and secret.
-    # It is crucial to store these as GitHub Secrets for security.
-    # Set them up in your repository settings under 'Secrets and variables' -> 'Actions'.
-    # Secret names: CONFLUENT_CLOUD_API_KEY, CONFLUENT_CLOUD_API_SECRET
-    environment: production
+    
+    environment: development
     
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
+
+      - name: Get changed files
+        id: changed-files
+        uses: tj-actions/changed-files@v44
+        with:
+          files: 'schemas/*.avsc'
 
       - name: Install jq
         run: sudo apt-get update && sudo apt-get install -y jq
@@ -29,25 +31,19 @@ jobs:
         env:
           CCLOUD_SR_API_KEY: ${{ secrets.CCLOUD_SR_API_KEY }}
           CCLOUD_SR_API_SECRET: ${{ secrets.CCLOUD_SR_API_SECRET }}
-          SCHEMA_REGISTRY_URL: "https://psrc-1dx3ljw.ap-southeast-1.aws.confluent.cloud" # <<<-- Replace with your actual Schema Registry URL
+          SCHEMA_REGISTRY_URL: "https://psrc-1dx3ljw.ap-southeast-1.aws.confluent.cloud"
         run: |
-          # Use the first added file to determine the path.
-          # You may need to adjust this logic if your workflow is more complex.
-          ADDED_SCHEMA_FILE=$(git diff --name-only --diff-filter=A HEAD^1 HEAD | grep 'schemas/.*.avsc' | head -n 1)
+          echo "The following files were updated:"
+          echo "${{ steps.changed-files.outputs.all_changed_files }}"
+          
+          # Iterate over each file for a specific task
+          for file in ${{ steps.changed-files.outputs.all_changed_files }}; do
+            echo "Registering schema with name: $file"
 
-          if [ -z "$ADDED_SCHEMA_FILE" ]; then
-            echo "No new schema file found. Skipping registration."
-            exit 0
-          fi
-
-          SCHEMA_NAME=$(basename "$ADDED_SCHEMA_FILE" .avsc)
-          SCHEMA_CONTENT=$(jq -c '.' "$ADDED_SCHEMA_FILE")
-
-          echo "Found new schema file: $ADDED_SCHEMA_FILE"
-          echo "Registering schema with name: $SCHEMA_NAME"
-
-          curl --request POST \
-            --url "$SCHEMA_REGISTRY_URL/subjects/$SCHEMA_NAME/versions" \
-            --user "$CONFLUENT_CLOUD_API_KEY:$CONFLUENT_CLOUD_API_SECRET" \
-            --header 'Content-Type: application/vnd.schemaregistry.v1+json' \
-            --data '{"schema": "'"$SCHEMA_CONTENT"'"}'
+            jq --null-input --raw-output --argfile schema user.avsc '{schema: $schema | tostring}' | \
+            curl -X POST \
+            -H "Content-Type: application/vnd.schemaregistry.v1+json" \
+            --user 27EAYRMQAQMJFLGK:cfltz6zJx9Kmz8v3d0MTkwzbvjas8F+fNBfPTgjkT6hVjwQrvYtoUGlBTpYkgwFA \
+            --data @- \
+            https://psrc-1dx3ljw.ap-southeast-1.aws.confluent.cloud/subjects/users-value/versions
+          done

@@ -1,0 +1,29 @@
+{
+	"namespace": "com.example.schemas",
+	"type": "record",
+	"name": "User",
+	"doc": "A sample Avro schema for a user record.",
+	"fields": [
+		{
+			"name": "id",
+			"type": "string",
+			"doc": "Unique identifier for the user."
+		},
+		{
+			"name": "name",
+			"type": "string",
+			"doc": "The user's full name."
+		},
+		{
+			"name": "email",
+			"type": ["null", "string"],
+			"default": null,
+			"doc": "The user's email address. It can be null."
+		},
+		{
+			"name": "registration_date",
+			"type": "long",
+			"doc": "Timestamp of user registration, in milliseconds since the epoch."
+		}
+	]
+}

@@ -41,7 +41,7 @@ jobs:
             filename=$(basename $file)
             echo "Registering schema with name: $filename"
 
-            jq --null-input --raw-output --argfile schema $file '{schema: $schema | tostring}' | \
+            jq --null-input --raw-output --slurpfile schema $file '{schema: $schema | tostring}' | \
             curl -X POST \
             -H "Content-Type: application/vnd.schemaregistry.v1+json" \
             --user $CCLOUD_SR_API_KEY:$CCLOUD_SR_API_SECRET \

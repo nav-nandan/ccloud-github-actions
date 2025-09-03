@@ -6,7 +6,7 @@ name: Register Schema to Confluent Cloud
 on:
   push:
     paths:
-      - 'schemas/*.avsc'
+      - '../../schemas/*.avsc'
 
 jobs:
   register-schema:

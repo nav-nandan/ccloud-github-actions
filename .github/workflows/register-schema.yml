@@ -1,0 +1,53 @@
+name: Register Schema to Confluent Cloud
+
+# This workflow is triggered on a push event to any branch.
+# It specifically watches for changes to files with a .avsc extension
+# inside the 'schemas' directory.
+on:
+  push:
+    paths:
+      - 'schemas/*.avsc'
+
+jobs:
+  register-schema:
+    runs-on: ubuntu-latest
+
+    # This job requires access to Confluent Cloud API key and secret.
+    # It is crucial to store these as GitHub Secrets for security.
+    # Set them up in your repository settings under 'Secrets and variables' -> 'Actions'.
+    # Secret names: CONFLUENT_CLOUD_API_KEY, CONFLUENT_CLOUD_API_SECRET
+    environment: production
+    
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: Install jq
+        run: sudo apt-get update && sudo apt-get install -y jq
+
+      - name: Register schema with Confluent Cloud
+        env:
+          CCLOUD_SR_API_KEY: ${{ secrets.CCLOUD_SR_API_KEY }}
+          CCLOUD_SR_API_SECRET: ${{ secrets.CCLOUD_SR_API_SECRET }}
+          SCHEMA_REGISTRY_URL: "https://psrc-1dx3ljw.ap-southeast-1.aws.confluent.cloud" # <<<-- Replace with your actual Schema Registry URL
+        run: |
+          # Use the first added file to determine the path.
+          # You may need to adjust this logic if your workflow is more complex.
+          ADDED_SCHEMA_FILE=$(git diff --name-only --diff-filter=A HEAD^1 HEAD | grep 'schemas/.*.avsc' | head -n 1)
+
+          if [ -z "$ADDED_SCHEMA_FILE" ]; then
+            echo "No new schema file found. Skipping registration."
+            exit 0
+          fi
+
+          SCHEMA_NAME=$(basename "$ADDED_SCHEMA_FILE" .avsc)
+          SCHEMA_CONTENT=$(jq -c '.' "$ADDED_SCHEMA_FILE")
+
+          echo "Found new schema file: $ADDED_SCHEMA_FILE"
+          echo "Registering schema with name: $SCHEMA_NAME"
+
+          curl --request POST \
+            --url "$SCHEMA_REGISTRY_URL/subjects/$SCHEMA_NAME/versions" \
+            --user "$CONFLUENT_CLOUD_API_KEY:$CONFLUENT_CLOUD_API_SECRET" \
+            --header 'Content-Type: application/vnd.schemaregistry.v1+json' \
+            --data '{"schema": "'"$SCHEMA_CONTENT"'"}'

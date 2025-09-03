@@ -31,12 +31,10 @@ jobs:
         env:
           CCLOUD_SR_API_KEY: ${{ secrets.CCLOUD_SR_API_KEY }}
           CCLOUD_SR_API_SECRET: ${{ secrets.CCLOUD_SR_API_SECRET }}
-          SCHEMA_REGISTRY_URL: "https://psrc-1dx3ljw.ap-southeast-1.aws.confluent.cloud"
+          CCLOUD_SR_URL: ${{ secrets.CCLOUD_SR_URL }}
         run: |
           echo "The following files were updated:"
           echo "${{ steps.changed-files.outputs.all_changed_files }}"
-
-          echo $CCLOUD_SR_API_KEY:$CCLOUD_SR_API_SECRET
           
           # Iterate over each file for a specific task
           for file in ${{ steps.changed-files.outputs.all_changed_files }}; do
@@ -48,5 +46,5 @@ jobs:
             -H "Content-Type: application/vnd.schemaregistry.v1+json" \
             --user $CCLOUD_SR_API_KEY:$CCLOUD_SR_API_SECRET \
             --data @- \
-            $SCHEMA_REGISTRY_URL/subjects/$filename/versions
+            $CCLOUD_SR_URL/subjects/$filename/versions
           done

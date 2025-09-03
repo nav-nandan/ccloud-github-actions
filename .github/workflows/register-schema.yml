@@ -39,7 +39,7 @@ jobs:
           # Iterate over each file for a specific task
           for file in ${{ steps.changed-files.outputs.all_changed_files }}; do
             filename=$(basename $file)
-            echo "Registering schema with name: $file"
+            echo "Registering schema with name: $filename"
 
             jq --null-input --raw-output --argfile schema $file '{schema: $schema | tostring}' | \
             curl -X POST \

@@ -24,6 +24,12 @@
 			"name": "registration_date",
 			"type": "long",
 			"doc": "Timestamp of user registration, in milliseconds since the epoch."
+		},
+		{
+			"name": "address",
+			"type": ["null", "string"],
+			"default": null,
+			"doc": "The user's address. It can be null."
 		}
 	]
 }

@@ -38,12 +38,13 @@ jobs:
           
           # Iterate over each file for a specific task
           for file in ${{ steps.changed-files.outputs.all_changed_files }}; do
+            filename=$(basename $file)
             echo "Registering schema with name: $file"
 
-            jq --null-input --raw-output --argfile schema user.avsc '{schema: $schema | tostring}' | \
+            jq --null-input --raw-output --argfile schema $file '{schema: $schema | tostring}' | \
             curl -X POST \
             -H "Content-Type: application/vnd.schemaregistry.v1+json" \
-            --user 27EAYRMQAQMJFLGK:cfltz6zJx9Kmz8v3d0MTkwzbvjas8F+fNBfPTgjkT6hVjwQrvYtoUGlBTpYkgwFA \
+            --user $CCLOUD_SR_API_KEY:$CCLOUD_SR_API_SECRET \
             --data @- \
-            https://psrc-1dx3ljw.ap-southeast-1.aws.confluent.cloud/subjects/users-value/versions
+            $SCHEMA_REGISTRY_URL/subjects/$filename/versions
           done

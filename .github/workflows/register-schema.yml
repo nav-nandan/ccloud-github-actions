@@ -35,6 +35,8 @@ jobs:
         run: |
           echo "The following files were updated:"
           echo "${{ steps.changed-files.outputs.all_changed_files }}"
+
+          echo $CCLOUD_SR_API_KEY:$CCLOUD_SR_API_SECRET
           
           # Iterate over each file for a specific task
           for file in ${{ steps.changed-files.outputs.all_changed_files }}; do

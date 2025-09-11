@@ -1,0 +1,33 @@
+name: List CCloud Org 
+
+# This workflow is triggered on a push event to any branch.
+# It specifically watches for changes to files with a .yml extension
+# inside the 'workflows' directory.
+on:
+  push:
+    paths:
+      - '.github/workflows/*.yml'
+
+jobs:
+  list-ccloud-org:
+    runs-on: ubuntu-latest
+    
+    environment: development
+    
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Install jq
+        run: sudo apt-get update && sudo apt-get install -y jq
+      
+      - name: Install confluent-cli
+        run: sudo apt install confluent-cli
+
+      - name: List environments in Confluent Cloud
+        env:
+          CONFLUENT_CLOUD_EMAIL: ${{ secrets.CONFLUENT_CLOUD_EMAIL }}
+          CONFLUENT_CLOUD_PASSWORD: ${{ secrets.CONFLUENT_CLOUD_PASSWORD }}
+        run: |
+          confluent login --save
+          confluent organization list

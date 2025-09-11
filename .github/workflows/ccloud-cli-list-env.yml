@@ -22,7 +22,7 @@ jobs:
         run: sudo apt-get update && sudo apt-get install -y jq
       
       - name: Install confluent-cli
-        run: sudo apt install confluent-cli
+        run: sudo apt-get install confluent-cli
 
       - name: List environments in Confluent Cloud
         env:
